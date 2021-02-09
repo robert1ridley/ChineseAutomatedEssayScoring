@@ -24,7 +24,23 @@ def scale_down_scores(scores_array, min_score=0, max_score=4):
 
 
 def rescale_scores(scores_array, min_score=0, max_score=4):
-    return scores_array * (max_score - min_score) + min_score
+    rescaled = scores_array * (max_score - min_score) + min_score
+    return np.around(rescaled).astype(int)
+
+
+def convert_to_ids_array(in_list, id_dict):
+    return np.array([[id_dict[item]] for item in in_list])
+
+
+def create_id_dict(items_list):
+    unique_items = set()
+    for item in items_list:
+        unique_items.add(item)
+
+    item_to_id = {}
+    for i, item in enumerate(unique_items):
+        item_to_id[item] = i
+    return item_to_id
 
 
 def pad_flat_text_sequences(index_sequences, max_title_len):
@@ -188,11 +204,13 @@ def essay_to_ids(essay_set, word_vocab):
     essay_texts = []
     essay_scores = []
     student_grades = []
+    essay_lengths = []
     for essay in essay_set:
         essay_title = essay['essay_title']
         essay_text = essay['essay_text']
         essay_score = essay['score']
         student_grade = essay['age']
+        essay_length = essay['length']
 
         # TITLE
         title_ids = []
@@ -221,7 +239,8 @@ def essay_to_ids(essay_set, word_vocab):
 
         essay_scores.append(essay_score)
         student_grades.append(student_grade)
-    return essay_titles, essay_texts, essay_scores, student_grades
+        essay_lengths.append(essay_length)
+    return essay_titles, essay_texts, essay_scores, student_grades, essay_lengths
 
 
 def load_word_embedding_dict(embedding_path):

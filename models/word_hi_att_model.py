@@ -4,7 +4,7 @@ from custom_layers.zeromasking import ZeroMaskedEntries
 from custom_layers.attention import Attention
 
 
-def build_word_hi_att(vocab_size, maxnum, maxlen, configs, embedding_weights):
+def build_word_hi_att(vocab_size, maxnum, maxlen, lengths_count, configs, embedding_weights):
     embedding_dim = configs.EMBEDDING_DIM
     dropout_prob = configs.DROPOUT
     cnn_filters = configs.CNN_FILTERS
@@ -22,9 +22,16 @@ def build_word_hi_att(vocab_size, maxnum, maxlen, configs, embedding_weights):
     hz_lstm = layers.LSTM(lstm_units, return_sequences=True, name='hz_lstm')(avg_zcnn)
     avg_hz_lstm = Attention(name='avg_hz_lstm')(hz_lstm)
 
-    y = layers.Dense(units=1, activation='sigmoid', name='y_att')(avg_hz_lstm)
+    essay_length_input = layers.Input(shape=(1,), dtype='int32', name='essay_length_input')
+    length_embedding = layers.Embedding(output_dim=embedding_dim, input_dim=lengths_count, input_length=1,
+                                        weights=None, mask_zero=True, name='length_embedding')(essay_length_input)
 
-    model = keras.Model(inputs=word_input, outputs=y)
+    length_layer = layers.Flatten()(length_embedding)
+    conc = layers.Concatenate()([avg_hz_lstm, length_layer])
+
+    y = layers.Dense(units=1, activation='sigmoid', name='y_att')(conc)
+
+    model = keras.Model(inputs=[word_input, essay_length_input], outputs=y)
 
     model.summary()
 
