@@ -178,7 +178,7 @@ def get_sents_and_words(data, configs):
         essay_text = items[3]
         essay_text = essay_text.replace("PARAGRAPH", "")
         # KEEP ONLY ESSAYS SHORTER THAT 1200 CHARS AND ARE IN THE SPECIFIED AGE GROUPS
-        if items[6] not in ["1200字", "1200字以上"] and items[5] in configs.AGE_GROUPS:
+        if items[6] in ["600字"] and items[5] in configs.AGE_GROUPS:
             essay = {}
             sentences = cut_sent(essay_text)
             essay['essay_id'] = essay_id
