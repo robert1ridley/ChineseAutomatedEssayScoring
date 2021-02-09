@@ -12,4 +12,4 @@ class Configs:
     EPOCHS = 50
     BATCH_SIZE = 10
     MODEL_OUTPUT_PATH = 'trained_models/'
-    AGE_GROUPS = ['初一']
+    AGE_GROUPS = ['高二']

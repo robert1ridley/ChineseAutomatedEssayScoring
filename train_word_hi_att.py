@@ -17,11 +17,12 @@ def main():
     data = get_data(data_path)
     random.shuffle(data)
     if configs.DEBUG:
-        data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data[:300], configs)
+        data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data[:3000], configs)
     else:
         data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data, configs)
     train_data, test_data = train_test_split(data, test_size=0.1, random_state=42)
     train_data, dev_data = train_test_split(train_data, test_size=0.1, random_state=42)
+
     word_vocab = create_vocab(train_data, configs)
     train_titles, train_texts, train_scores, train_grades, train_lengths = essay_to_ids(train_data, word_vocab)
     dev_titles, dev_texts, dev_scores, dev_grades, dev_lengths = essay_to_ids(dev_data, word_vocab)
@@ -32,8 +33,6 @@ def main():
     train_lengths_X = convert_to_ids_array(train_lengths, lengths_id_dict)
     dev_lengths_X = convert_to_ids_array(dev_lengths, lengths_id_dict)
     test_lengths_X = convert_to_ids_array(test_lengths, lengths_id_dict)
-
-    # sys.exit()
 
     train_scores_y = convert_original_scores_to_new_scores(train_scores)
     dev_scores_y = convert_original_scores_to_new_scores(dev_scores)
@@ -61,11 +60,11 @@ def main():
     embedd_matrix = build_embedd_table(word_vocab, embedd_dict, embedd_dim, caseless=True)
     embed_table = [embedd_matrix]
 
-    train_inputs = [train_texts_X, train_lengths_X]
-    dev_inputs = [dev_texts_X, dev_lengths_X]
-    test_inputs = [test_texts_X, test_lengths_X]
+    train_inputs = [train_texts_X, train_titles_X, train_lengths_X]
+    dev_inputs = [dev_texts_X, dev_titles_X, dev_lengths_X]
+    test_inputs = [test_texts_X, test_titles_X, test_lengths_X]
 
-    model = build_word_hi_att(len(word_vocab), longest_sent_count, longest_sent, lengths_count, configs,
+    model = build_word_hi_att(len(word_vocab), longest_sent_count, longest_sent, lengths_count, longest_title, configs,
                               embedding_weights=embed_table)
     evaluator = Evaluator(dev_inputs, dev_scores_y_scaled, test_inputs, test_scores_y_scaled)
     evaluator.evaluate(model, -1, print_info=True)
