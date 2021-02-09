@@ -1,3 +1,4 @@
+import sys
 import time
 import random
 from sklearn.model_selection import train_test_split
@@ -16,9 +17,9 @@ def main():
     data = get_data(data_path)
     random.shuffle(data)
     if configs.DEBUG:
-        data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data[:100])
+        data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data[:100], configs)
     else:
-        data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data)
+        data, longest_sent_count, longest_sent, longest_title = get_sents_and_words(data, configs)
     train_data, test_data = train_test_split(data, test_size=0.1, random_state=42)
     train_data, dev_data = train_test_split(train_data, test_size=0.1, random_state=42)
     word_vocab = create_vocab(train_data, configs)

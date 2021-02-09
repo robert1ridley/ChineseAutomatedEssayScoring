@@ -150,7 +150,7 @@ def create_vocab(data, configs):
     return word_vocab
 
 
-def get_sents_and_words(data):
+def get_sents_and_words(data, configs):
     longest_sent_count = -1
     longest_sent = -1
     longest_title = -1
@@ -161,8 +161,8 @@ def get_sents_and_words(data):
         essay_title = items[2]
         essay_text = items[3]
         essay_text = essay_text.replace("PARAGRAPH", "")
-        # KEEP ONLY ESSAYS SHORTER THAT 1200 CHARS
-        if items[6] not in ["1200字", "1200字以上"]:
+        # KEEP ONLY ESSAYS SHORTER THAT 1200 CHARS AND ARE IN THE SPECIFIED AGE GROUPS
+        if items[6] not in ["1200字", "1200字以上"] and items[5] in configs.AGE_GROUPS:
             essay = {}
             sentences = cut_sent(essay_text)
             essay['essay_id'] = essay_id
