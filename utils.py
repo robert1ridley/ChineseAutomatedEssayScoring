@@ -202,6 +202,37 @@ def get_sents_and_words(data, configs):
     return essays, longest_sent_count, longest_sent, longest_title
 
 
+def get_words(data, configs):
+    longest_essay = -1
+    longest_title = -1
+    essays = []
+    for line in data:
+        items = line.split('\t')
+        essay_id = items[0]
+        essay_title = items[2]
+        essay_text = items[3]
+        essay_text = essay_text.replace("PARAGRAPH", "")
+        if items[6] not in ["1200字", "1200字以上"] and items[5] in configs.AGE_GROUPS:
+            essay = {}
+            essay_text = list(jieba.cut(essay_text))
+            score = items[4]
+            if score == '5':
+                score = '4'
+            essay['essay_id'] = essay_id
+            essay['essay_title'] = essay_title
+            essay['essay_text'] = essay_text
+            essay['score'] = score
+            essay['age'] = items[5]
+            essay['length'] = items[6]
+            essays.append(essay)
+            if len(essay_text) > longest_essay:
+                longest_essay = len(essay_text)
+            title_words = list(jieba.cut(essay_title))
+            if len(title_words) > longest_title:
+                longest_title = len(title_words)
+    return essays, longest_essay, longest_title
+
+
 def essay_to_ids(essay_set, word_vocab):
     essay_titles = []
     essay_texts = []
@@ -240,6 +271,46 @@ def essay_to_ids(essay_set, word_vocab):
             sentences_list.append(sentence_ids)
         essay_texts.append(sentences_list)
 
+        essay_scores.append(essay_score)
+        student_grades.append(student_grade)
+        essay_lengths.append(essay_length)
+    return essay_titles, essay_texts, essay_scores, student_grades, essay_lengths
+
+
+def essay_to_ids_flat(essay_set, word_vocab):
+    essay_titles = []
+    essay_texts = []
+    essay_scores = []
+    student_grades = []
+    essay_lengths = []
+    for essay in essay_set:
+        essay_title = essay['essay_title']
+        essay_text = essay['essay_text']
+        essay_score = essay['score']
+        student_grade = essay['age']
+        essay_length = essay['length']
+
+        # TITLE
+        title_ids = []
+        for i, word in enumerate(jieba.cut(essay_title)):
+            if is_number(word):
+                title_ids.append(word_vocab['<num>'])
+            elif word in word_vocab.keys():
+                title_ids.append(word_vocab[word])
+            else:
+                title_ids.append(word_vocab['<unk>'])
+        essay_titles.append(title_ids)
+
+        # TEXTS
+        essay_ids = []
+        for word in essay_text:
+            if is_number(word):
+                essay_ids.append(word_vocab['<num>'])
+            elif word in word_vocab.keys():
+                essay_ids.append(word_vocab[word])
+            else:
+                essay_ids.append(word_vocab['<unk>'])
+        essay_texts.append(essay_ids)
         essay_scores.append(essay_score)
         student_grades.append(student_grade)
         essay_lengths.append(essay_length)
