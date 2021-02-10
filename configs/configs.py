@@ -7,7 +7,7 @@ class Configs:
     PRETRAINED_EMBEDDING = True
     DEBUG = False
     EMBEDDING_PATH = 'embeddings/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5'
-    VOCAB_SIZE = 4000
+    VOCAB_SIZE = 20000
     DATA_PATH = 'leleketang_combined_clean.tsv'
     EPOCHS = 50
     BATCH_SIZE = 10

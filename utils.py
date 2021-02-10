@@ -239,6 +239,7 @@ def essay_to_ids(essay_set, word_vocab):
     essay_scores = []
     student_grades = []
     essay_lengths = []
+    num_hit, unk_hit, total = 0., 0., 0.
     for essay in essay_set:
         essay_title = essay['essay_title']
         essay_text = essay['essay_text']
@@ -264,16 +265,21 @@ def essay_to_ids(essay_set, word_vocab):
             for word in sentence:
                 if is_number(word):
                     sentence_ids.append(word_vocab['<num>'])
+                    num_hit += 1
                 elif word in word_vocab.keys():
                     sentence_ids.append(word_vocab[word])
                 else:
                     sentence_ids.append(word_vocab['<unk>'])
+                    unk_hit += 1
+                total += 1
             sentences_list.append(sentence_ids)
         essay_texts.append(sentences_list)
 
         essay_scores.append(essay_score)
         student_grades.append(student_grade)
         essay_lengths.append(essay_length)
+    print(' num hit: {}, total: {}, unkn hit: {}'.format(num_hit, total, unk_hit))
+    print('  <num> hit rate: %.2f%%, <unk> hit rate: %.2f%%' % (100 * num_hit / total, 100 * unk_hit / total))
     return essay_titles, essay_texts, essay_scores, student_grades, essay_lengths
 
 
@@ -283,6 +289,7 @@ def essay_to_ids_flat(essay_set, word_vocab):
     essay_scores = []
     student_grades = []
     essay_lengths = []
+    num_hit, unk_hit, total = 0., 0., 0.
     for essay in essay_set:
         essay_title = essay['essay_title']
         essay_text = essay['essay_text']
@@ -306,14 +313,19 @@ def essay_to_ids_flat(essay_set, word_vocab):
         for word in essay_text:
             if is_number(word):
                 essay_ids.append(word_vocab['<num>'])
+                num_hit += 1
             elif word in word_vocab.keys():
                 essay_ids.append(word_vocab[word])
             else:
                 essay_ids.append(word_vocab['<unk>'])
+                unk_hit += 1
+            total += 1
         essay_texts.append(essay_ids)
         essay_scores.append(essay_score)
         student_grades.append(student_grade)
         essay_lengths.append(essay_length)
+    print(' num hit: {}, total: {}, unkn hit: {}'.format(num_hit, total, unk_hit))
+    print('  <num> hit rate: %.2f%%, <unk> hit rate: %.2f%%' % (100 * num_hit / total, 100 * unk_hit / total))
     return essay_titles, essay_texts, essay_scores, student_grades, essay_lengths
 
 
