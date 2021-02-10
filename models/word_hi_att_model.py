@@ -20,7 +20,7 @@ def build_word_hi_att(vocab_size, maxnum, maxlen, lengths_count, longest_title, 
     zcnn = layers.TimeDistributed(layers.Conv1D(cnn_filters, cnn_kernel_size, padding='valid'), name='zcnn')(resh_W)
     avg_zcnn = layers.TimeDistributed(Attention(), name='avg_zcnn')(zcnn)
     hz_lstm = layers.LSTM(lstm_units, return_sequences=True, name='hz_lstm')(avg_zcnn)
-    # avg_hz_lstm = Attention(name='avg_hz_lstm')(hz_lstm)
+    avg_hz_lstm = Attention(name='avg_hz_lstm')(hz_lstm)
 
     essay_length_input = layers.Input(shape=(1,), dtype='int32', name='essay_length_input')
     length_embedding = layers.Embedding(output_dim=embedding_dim, input_dim=lengths_count, input_length=1,
@@ -32,10 +32,10 @@ def build_word_hi_att(vocab_size, maxnum, maxlen, lengths_count, longest_title, 
     title_hz_lstm = layers.LSTM(lstm_units, return_sequences=True, name='title_hz_lstm')(title_x)
 
     title_essay_attention = layers.Attention()([hz_lstm, title_hz_lstm])
-    avg_hz_lstm = Attention(name='avg_hz_lstm')(title_essay_attention)
+    comb_avg_hz_lstm = Attention(name='comb_avg_hz_lstm')(title_essay_attention)
 
     length_layer = layers.Flatten()(length_embedding)
-    conc = layers.Concatenate()([avg_hz_lstm, length_layer])
+    conc = layers.Concatenate()([avg_hz_lstm, comb_avg_hz_lstm, length_layer])
 
     y = layers.Dense(units=1, activation='sigmoid', name='y_att')(conc)
 

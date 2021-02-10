@@ -19,11 +19,11 @@ def convert_original_scores_to_new_scores(score_list):
     return np.array([[int(score) - 1] for score in score_list])
 
 
-def scale_down_scores(scores_array, min_score=0, max_score=4):
+def scale_down_scores(scores_array, min_score=1, max_score=3):
     return (scores_array - min_score) / (max_score - min_score)
 
 
-def rescale_scores(scores_array, min_score=0, max_score=4):
+def rescale_scores(scores_array, min_score=1, max_score=3):
     rescaled = scores_array * (max_score - min_score) + min_score
     return np.around(rescaled).astype(int)
 
@@ -178,13 +178,16 @@ def get_sents_and_words(data, configs):
         essay_text = items[3]
         essay_text = essay_text.replace("PARAGRAPH", "")
         # KEEP ONLY ESSAYS SHORTER THAT 1200 CHARS AND ARE IN THE SPECIFIED AGE GROUPS
-        if items[6] in ["600字"] and items[5] in configs.AGE_GROUPS:
+        if items[6] not in ["1200字", "1200字以上"] and items[5] in configs.AGE_GROUPS:
             essay = {}
             sentences = cut_sent(essay_text)
+            score = items[4]
+            if score == '5':
+                score = '4'
             essay['essay_id'] = essay_id
             essay['essay_title'] = essay_title
             essay['essay_text'] = sentences
-            essay['score'] = items[4]
+            essay['score'] = score
             essay['age'] = items[5]
             essay['length'] = items[6]
             essays.append(essay)
