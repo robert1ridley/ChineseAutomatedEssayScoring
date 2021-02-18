@@ -15,8 +15,8 @@ def is_number(token):
     return bool(num_regex.match(token))
 
 
-# def convert_org_data_scores_to_new_scores(score_list):
-#     return np.array([[int(score)] for score in score_list])
+def convert_org_data_scores_to_new_scores(score_list):
+    return np.array([[int(score)] for score in score_list])
 
 def convert_original_scores_to_new_scores(score_list):
     return np.array([[int(score) - 1] for score in score_list])

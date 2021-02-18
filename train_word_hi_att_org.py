@@ -4,7 +4,7 @@ import random
 from sklearn.model_selection import train_test_split
 from configs.configs import OrgConfigs
 from utils import get_data, get_org_data_sents_and_words, create_vocab, org_data_essay_to_ids, \
-    convert_original_scores_to_new_scores, pad_hierarchical_text_sequences, pad_flat_text_sequences, \
+    convert_org_data_scores_to_new_scores, pad_hierarchical_text_sequences, pad_flat_text_sequences, \
     scale_down_scores, load_word_embedding_dict, build_embedd_table
 from models.word_hi_att_model import build_word_hi_att_text_only
 from evaluators.evaluator import Evaluator
@@ -28,9 +28,9 @@ def main():
     dev_titles, dev_texts, dev_scores = org_data_essay_to_ids(dev_data, word_vocab)
     test_titles, test_texts, test_scores = org_data_essay_to_ids(test_data, word_vocab)
 
-    train_scores_y = train_scores
-    dev_scores_y = dev_scores
-    test_scores_y = test_scores
+    train_scores_y = convert_org_data_scores_to_new_scores(train_scores)
+    dev_scores_y = convert_org_data_scores_to_new_scores(dev_scores)
+    test_scores_y = convert_org_data_scores_to_new_scores(test_scores)
 
     train_titles_X = pad_flat_text_sequences(train_titles, longest_title)
     dev_titles_X = pad_flat_text_sequences(dev_titles, longest_title)
