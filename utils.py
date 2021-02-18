@@ -1,5 +1,6 @@
 import re
 import jieba
+import jieba.posseg as pseg
 import numpy as np
 
 
@@ -134,6 +135,18 @@ def cut_sent(para):
     return sent_tokens
 
 
+def convert_cut_sentences_to_pos_sentences(sentences):
+    new_sentences = []
+    for sentence in sentences:
+        pos_tags = []
+        joined_sent = ''.join(sentence)
+        tokens = pseg.cut(joined_sent)
+        for word, pos in tokens:
+            pos_tags.append(pos)
+        new_sentences.append(pos_tags)
+    return new_sentences
+
+
 def create_vocab(data, configs):
     vocab_size = configs.VOCAB_SIZE
     word_vocab_count = {}
@@ -162,6 +175,42 @@ def create_vocab(data, configs):
                 vocab_size += 1
 
     word_vocab = {'<pad>': 0, '<unk>': 1, '<num>': 2}
+    vcb_len = len(word_vocab)
+    index = vcb_len
+    for word, _ in sorted_word_freqs[:vocab_size - vcb_len]:
+        word_vocab[word] = index
+        index += 1
+    return word_vocab
+
+
+def create_pos_vocab(data, configs):
+    pos_vocab_count = {}
+    vocab_size = configs.VOCAB_SIZE
+    for essay in data:
+        essay_title = essay['essay_title']
+        essay_text = essay['essay_text']
+        essay_title = pseg.cut(essay_title)
+        for word, pos in essay_title:
+            try:
+                pos_vocab_count[pos] += 1
+            except KeyError:
+                pos_vocab_count[pos] = 1
+        for sentence in essay_text:
+            for pos in sentence:
+                try:
+                    pos_vocab_count[pos] += 1
+                except KeyError:
+                    pos_vocab_count[pos] = 1
+
+    import operator
+    sorted_word_freqs = sorted(pos_vocab_count.items(), key=operator.itemgetter(1), reverse=True)
+    if vocab_size <= 0:
+        vocab_size = 0
+        for word, freq in sorted_word_freqs:
+            if freq > 1:
+                vocab_size += 1
+
+    word_vocab = {'<pad>': 0, '<unk>': 1}
     vcb_len = len(word_vocab)
     index = vcb_len
     for word, _ in sorted_word_freqs[:vocab_size - vcb_len]:
@@ -230,6 +279,40 @@ def get_org_data_sents_and_words(data):
         if len(sentences) > longest_sent_count:
             longest_sent_count = len(sentences)
         for sentence in sentences:
+            if len(sentence) > longest_sent:
+                longest_sent = len(sentence)
+        title_words = list(jieba.cut(essay_title))
+        if len(title_words) > longest_title:
+            longest_title = len(title_words)
+    return essays, longest_sent_count, longest_sent, longest_title
+
+
+def get_pos_org_data_sents_and_words(data):
+    longest_sent_count = -1
+    longest_sent = -1
+    longest_title = -1
+    essays = []
+    score_convert = {
+        'Bad': 1,
+        'Medium': 2,
+        'Great': 3
+    }
+    for line in data:
+        items = line.split('\t')
+        essay_title = items[0]
+        essay_text = items[1]
+        score = items[2].strip()
+        essay = {}
+        sentences = cut_sent(essay_text)
+        pos_sentences = convert_cut_sentences_to_pos_sentences(sentences)
+
+        essay['essay_title'] = essay_title
+        essay['essay_text'] = pos_sentences
+        essay['score'] = score_convert[score]
+        essays.append(essay)
+        if len(pos_sentences) > longest_sent_count:
+            longest_sent_count = len(pos_sentences)
+        for sentence in pos_sentences:
             if len(sentence) > longest_sent:
                 longest_sent = len(sentence)
         title_words = list(jieba.cut(essay_title))
@@ -310,6 +393,45 @@ def org_data_essay_to_ids(essay_set, word_vocab):
         essay_scores.append(essay_score)
     print(' num hit: {}, total: {}, unkn hit: {}'.format(num_hit, total, unk_hit))
     print('  <num> hit rate: %.2f%%, <unk> hit rate: %.2f%%' % (100 * num_hit / total, 100 * unk_hit / total))
+    return essay_titles, essay_texts, essay_scores
+
+
+def org_pos_data_essay_to_ids(essay_set, word_vocab):
+    essay_titles = []
+    essay_texts = []
+    essay_scores = []
+    unk_hit, total = 0., 0.
+    for essay in essay_set:
+        essay_title = essay['essay_title']
+        essay_text = essay['essay_text']
+        essay_score = essay['score']
+
+        # TITLE
+        title_ids = []
+        for word, pos in pseg.cut(essay_title):
+            if pos in word_vocab.keys():
+                title_ids.append(word_vocab[pos])
+            else:
+                title_ids.append(word_vocab['<unk>'])
+        essay_titles.append(title_ids)
+
+        # TEXTS
+        sentences_list = []
+        for sentence in essay_text:
+            sentence_ids = []
+            for word in sentence:
+                if word in word_vocab.keys():
+                    sentence_ids.append(word_vocab[word])
+                else:
+                    sentence_ids.append(word_vocab['<unk>'])
+                    unk_hit += 1
+                total += 1
+            sentences_list.append(sentence_ids)
+        essay_texts.append(sentences_list)
+
+        essay_scores.append(essay_score)
+    print(' total: {}, unkn hit: {}'.format(total, unk_hit))
+    print('  <unk> hit rate: %.2f%%' % (100 * unk_hit / total))
     return essay_titles, essay_texts, essay_scores
 
 
