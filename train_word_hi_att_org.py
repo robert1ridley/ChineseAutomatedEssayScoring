@@ -28,9 +28,9 @@ def main():
     dev_titles, dev_texts, dev_scores = org_data_essay_to_ids(dev_data, word_vocab)
     test_titles, test_texts, test_scores = org_data_essay_to_ids(test_data, word_vocab)
 
-    train_scores_y = convert_original_scores_to_new_scores(train_scores)
-    dev_scores_y = convert_original_scores_to_new_scores(dev_scores)
-    test_scores_y = convert_original_scores_to_new_scores(test_scores)
+    train_scores_y = train_scores
+    dev_scores_y = dev_scores
+    test_scores_y = test_scores
 
     train_titles_X = pad_flat_text_sequences(train_titles, longest_title)
     dev_titles_X = pad_flat_text_sequences(dev_titles, longest_title)
