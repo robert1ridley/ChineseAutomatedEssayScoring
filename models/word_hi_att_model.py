@@ -48,7 +48,7 @@ def build_word_hi_att(vocab_size, maxnum, maxlen, lengths_count, longest_title, 
     return model
 
 
-def build_word_hi_att_text_only(vocab_size, maxnum, maxlen, longest_title, configs, embedding_weights):
+def build_word_hi_att_text_only(vocab_size, maxnum, maxlen, configs, embedding_weights):
     embedding_dim = configs.EMBEDDING_DIM
     dropout_prob = configs.DROPOUT
     cnn_filters = configs.CNN_FILTERS
@@ -66,19 +66,9 @@ def build_word_hi_att_text_only(vocab_size, maxnum, maxlen, longest_title, confi
     hz_lstm = layers.LSTM(lstm_units, return_sequences=True, name='hz_lstm')(avg_zcnn)
     avg_hz_lstm = Attention(name='avg_hz_lstm')(hz_lstm)
 
-    title_input = layers.Input(shape=(longest_title,), dtype='int32', name='title_input')
-    title_x = layers.Embedding(output_dim=embedding_dim, input_dim=vocab_size, input_length=longest_title,
-                               weights=embedding_weights, mask_zero=True, name='title_x')(title_input)
-    title_hz_lstm = layers.LSTM(lstm_units, return_sequences=True, name='title_hz_lstm')(title_x)
+    y = layers.Dense(units=1, activation='sigmoid', name='y_att')(avg_hz_lstm)
 
-    title_essay_attention = layers.Attention()([hz_lstm, title_hz_lstm])
-    comb_avg_hz_lstm = Attention(name='comb_avg_hz_lstm')(title_essay_attention)
-
-    conc = layers.Concatenate()([avg_hz_lstm, comb_avg_hz_lstm])
-
-    y = layers.Dense(units=1, activation='sigmoid', name='y_att')(conc)
-
-    model = keras.Model(inputs=[word_input, title_input], outputs=y)
+    model = keras.Model(inputs=word_input, outputs=y)
 
     model.summary()
 

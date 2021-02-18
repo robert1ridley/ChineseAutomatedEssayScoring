@@ -54,11 +54,11 @@ def main():
     embedd_matrix = build_embedd_table(word_vocab, embedd_dict, embedd_dim, caseless=True)
     embed_table = [embedd_matrix]
 
-    train_inputs = [train_texts_X, train_titles_X]
-    dev_inputs = [dev_texts_X, dev_titles_X]
-    test_inputs = [test_texts_X, test_titles_X]
+    train_inputs = [train_texts_X]
+    dev_inputs = [dev_texts_X]
+    test_inputs = [test_texts_X]
 
-    model = build_word_hi_att_text_only(len(word_vocab), longest_sent_count, longest_sent, longest_title, configs,
+    model = build_word_hi_att_text_only(len(word_vocab), longest_sent_count, longest_sent, configs,
                                         embedding_weights=embed_table)
     evaluator = Evaluator(dev_inputs, dev_scores_y_scaled, test_inputs, test_scores_y_scaled)
     evaluator.evaluate(model, -1, print_info=True)
