@@ -202,6 +202,38 @@ def get_sents_and_words(data, configs):
     return essays, longest_sent_count, longest_sent, longest_title
 
 
+def get_org_data_sents_and_words(data):
+    longest_sent_count = -1
+    longest_sent = -1
+    longest_title = -1
+    essays = []
+    score_convert = {
+        'Bad': 1,
+        'Medium': 2,
+        'Great': 3
+    }
+    for line in data:
+        items = line.split('\t')
+        essay_title = items[0]
+        essay_text = items[1]
+        score = items[2].strip()
+        essay = {}
+        sentences = cut_sent(essay_text)
+        essay['essay_title'] = essay_title
+        essay['essay_text'] = sentences
+        essay['score'] = score_convert[score]
+        essays.append(essay)
+        if len(sentences) > longest_sent_count:
+            longest_sent_count = len(sentences)
+        for sentence in sentences:
+            if len(sentence) > longest_sent:
+                longest_sent = len(sentence)
+        title_words = list(jieba.cut(essay_title))
+        if len(title_words) > longest_title:
+            longest_title = len(title_words)
+    return essays, longest_sent_count, longest_sent, longest_title
+
+
 def get_words(data, configs):
     longest_essay = -1
     longest_title = -1
@@ -231,6 +263,50 @@ def get_words(data, configs):
             if len(title_words) > longest_title:
                 longest_title = len(title_words)
     return essays, longest_essay, longest_title
+
+
+def org_data_essay_to_ids(essay_set, word_vocab):
+    essay_titles = []
+    essay_texts = []
+    essay_scores = []
+    num_hit, unk_hit, total = 0., 0., 0.
+    for essay in essay_set:
+        essay_title = essay['essay_title']
+        essay_text = essay['essay_text']
+        essay_score = essay['score']
+
+        # TITLE
+        title_ids = []
+        for i, word in enumerate(jieba.cut(essay_title)):
+            if is_number(word):
+                title_ids.append(word_vocab['<num>'])
+            elif word in word_vocab.keys():
+                title_ids.append(word_vocab[word])
+            else:
+                title_ids.append(word_vocab['<unk>'])
+        essay_titles.append(title_ids)
+
+        # TEXTS
+        sentences_list = []
+        for sentence in essay_text:
+            sentence_ids = []
+            for word in sentence:
+                if is_number(word):
+                    sentence_ids.append(word_vocab['<num>'])
+                    num_hit += 1
+                elif word in word_vocab.keys():
+                    sentence_ids.append(word_vocab[word])
+                else:
+                    sentence_ids.append(word_vocab['<unk>'])
+                    unk_hit += 1
+                total += 1
+            sentences_list.append(sentence_ids)
+        essay_texts.append(sentences_list)
+
+        essay_scores.append(essay_score)
+    print(' num hit: {}, total: {}, unkn hit: {}'.format(num_hit, total, unk_hit))
+    print('  <num> hit rate: %.2f%%, <unk> hit rate: %.2f%%' % (100 * num_hit / total, 100 * unk_hit / total))
+    return essay_titles, essay_texts, essay_scores
 
 
 def essay_to_ids(essay_set, word_vocab):
