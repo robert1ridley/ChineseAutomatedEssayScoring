@@ -1,12 +1,16 @@
 import sys
 import time
 import random
+import numpy as np
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from configs.configs import OrgConfigs
 from utils import get_data, get_org_data_sents_and_words, create_vocab, org_data_essay_to_ids, \
     convert_org_data_scores_to_new_scores, pad_hierarchical_text_sequences, pad_flat_text_sequences, \
     scale_down_scores, load_word_embedding_dict, build_embedd_table
 from models.word_hi_att_model import build_word_hi_att_text_only
+from custom_layers.zeromasking import ZeroMaskedEntries
+from custom_layers.attention import Attention
 from evaluators.evaluator import Evaluator
 
 
@@ -60,10 +64,13 @@ def main():
 
     model = build_word_hi_att_text_only(len(word_vocab), longest_sent_count, longest_sent, configs,
                                         embedding_weights=embed_table)
+    model_path = configs.MODEL_OUTPUT_PATH + "org_word_hi_att_text_only_model"
     evaluator = Evaluator(dev_inputs, dev_scores_y_scaled, test_inputs, test_scores_y_scaled)
     evaluator.evaluate(model, -1, print_info=True)
     epochs = configs.EPOCHS
     batch_size = configs.BATCH_SIZE
+    checkpoint_path = configs.MODEL_OUTPUT_PATH + "org_word_hi_att_text_only_weights.ckpt"
+    layers_dict = {'ZeroMaskedEntries': ZeroMaskedEntries, 'Attention': Attention}
     for ii in range(epochs):
         print('Epoch %s/%s' % (str(ii + 1), epochs))
         start_time = time.time()
@@ -71,7 +78,15 @@ def main():
                   train_scores_y_scaled, batch_size=batch_size, epochs=1, verbose=0, shuffle=True)
         tt_time = time.time() - start_time
         print("Training one epoch in %.3f s" % tt_time)
-        evaluator.evaluate(model, ii + 1)
+        best = evaluator.evaluate(model, ii + 1)
+        if best:
+            print("SAVING TO ", model_path)
+            tf.keras.models.save_model(model, model_path, overwrite=True, include_optimizer=True, save_format='h5')
+            rec_model = tf.keras.models.load_model(model_path, custom_objects=layers_dict)
+            np.testing.assert_allclose(
+                model.predict(test_inputs), rec_model.predict(test_inputs)
+            )
+            # model.save_weights(checkpoint_path, overwrite=True)
 
     evaluator.print_final_info()
 

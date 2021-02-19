@@ -32,8 +32,10 @@ class Evaluator():
             self.best_dev_qwk = self.dev_qwk
             self.best_test_qwk = self.test_qwk
             self.best_dev_epoch = epoch
-        if print_info:
             self.print_info()
+            return True
+        self.print_info()
+        return False
 
 
     def print_info(self):
