@@ -309,6 +309,7 @@ def get_pos_org_data_sents_and_words(data):
         essay['essay_title'] = essay_title
         essay['essay_text'] = pos_sentences
         essay['score'] = score_convert[score]
+        essay['raw_text'] = essay_text
         essays.append(essay)
         if len(pos_sentences) > longest_sent_count:
             longest_sent_count = len(pos_sentences)
@@ -400,11 +401,13 @@ def org_pos_data_essay_to_ids(essay_set, word_vocab):
     essay_titles = []
     essay_texts = []
     essay_scores = []
+    texts_raw = []
     unk_hit, total = 0., 0.
     for essay in essay_set:
         essay_title = essay['essay_title']
         essay_text = essay['essay_text']
         essay_score = essay['score']
+        texts_raw.append(essay['raw_text'])
 
         # TITLE
         title_ids = []
@@ -432,7 +435,7 @@ def org_pos_data_essay_to_ids(essay_set, word_vocab):
         essay_scores.append(essay_score)
     print(' total: {}, unkn hit: {}'.format(total, unk_hit))
     print('  <unk> hit rate: %.2f%%' % (100 * unk_hit / total))
-    return essay_titles, essay_texts, essay_scores
+    return essay_titles, essay_texts, essay_scores, texts_raw
 
 
 def essay_to_ids(essay_set, word_vocab):

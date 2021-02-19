@@ -75,3 +75,16 @@ def build_word_hi_att_text_only(vocab_size, maxnum, maxlen, configs, embedding_w
     model.compile(loss='mse', optimizer='rmsprop')
 
     return model
+
+
+def build_features_model(num_features):
+    features_input = layers.Input(shape=(num_features,), name='features_input')
+    y = layers.Dense(units=1, activation='sigmoid', name='y_att')(features_input)
+
+    model = keras.Model(inputs=features_input, outputs=y)
+
+    model.summary()
+
+    model.compile(loss='mse', optimizer='rmsprop')
+
+    return model
