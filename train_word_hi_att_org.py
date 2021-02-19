@@ -1,5 +1,6 @@
 import sys
 import time
+import json
 import random
 import numpy as np
 import tensorflow as tf
@@ -28,6 +29,9 @@ def main():
     train_data, dev_data = train_test_split(train_data, test_size=0.1, random_state=42)
 
     word_vocab = create_vocab(train_data, configs)
+    vocab_path = configs.MODEL_OUTPUT_PATH + "vocab.json"
+    with open(vocab_path, 'w', encoding='utf-8') as fp:
+        json.dump(word_vocab, fp)
     train_titles, train_texts, train_scores = org_data_essay_to_ids(train_data, word_vocab)
     dev_titles, dev_texts, dev_scores = org_data_essay_to_ids(dev_data, word_vocab)
     test_titles, test_texts, test_scores = org_data_essay_to_ids(test_data, word_vocab)
@@ -69,7 +73,6 @@ def main():
     evaluator.evaluate(model, -1, print_info=True)
     epochs = configs.EPOCHS
     batch_size = configs.BATCH_SIZE
-    checkpoint_path = configs.MODEL_OUTPUT_PATH + "org_word_hi_att_text_only_weights.ckpt"
     layers_dict = {'ZeroMaskedEntries': ZeroMaskedEntries, 'Attention': Attention}
     for ii in range(epochs):
         print('Epoch %s/%s' % (str(ii + 1), epochs))
@@ -86,7 +89,6 @@ def main():
             np.testing.assert_allclose(
                 model.predict(test_inputs), rec_model.predict(test_inputs)
             )
-            # model.save_weights(checkpoint_path, overwrite=True)
 
     evaluator.print_final_info()
 
